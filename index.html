@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>معالج النصوص القرآنية الفرقانية التفاعلي</title>
+    <style>
+        body {
+            font-family: "Traditional Arabic", Arial, sans-serif;
+            text-align: center;
+            margin: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: white;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        .text-area {
+            position: relative;
+            width: 90%;
+            margin: 20px auto;
+        }
+        textarea {
+            width: 100%;
+            height: 150px;
+            padding: 15px;
+            font-size: 18px;
+            font-family: "Traditional Arabic", Arial, sans-serif;
+            border: 2px solid #ddd;
+            border-radius: 5px;
+            resize: vertical;
+            line-height: 1.8;
+        }
+        #processed-text {
+            width: 100%;
+            height: 150px;
+            padding: 15px;
+            font-size: 18px;
+            border: 2px solid #ddd;
+            border-radius: 5px;
+            background-color: #f9f9f9;
+            margin-top: 20px;
+            text-align: right;
+            overflow-y: auto;
+            white-space: pre-wrap;
+            line-height: 1.8;
+        }
+        .button-group {
+            margin: 20px 0;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        button {
+            margin: 5px;
+            padding: 10px 25px;
+            font-size: 16px;
+            cursor: pointer;
+            border: none;
+            border-radius: 5px;
+            color: white;
+            background-color: #333;
+            transition: all 0.3s;
+            flex: 1 1 calc(25% - 10px);
+            max-width: calc(25% - 10px);
+        }
+        button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+        #read-btn { background-color: #4CAF50; }
+        #pause-btn { background-color: #f44336; }
+        #save-text-btn { background-color: #2196F3; }
+        #save-audio-btn { background-color: #9C27B0; }
+        .status {
+            margin-top: 10px;
+            color: #555353;
+            font-size: 14px;
+        }
+        #timer {
+            font-size: 16px;
+            color: #333;
+            margin: 10px 0;
+        }
+        .responsive-buttons {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            margin: 20px 0;
+        }
+        .responsive-buttons button {
+            margin: 5px;
+            padding: 10px 15px;
+            font-size: 14px;
+            flex: 1 1 calc(25% - 10px);
+            max-width: calc(25% - 10px);
+        }
+        @media (max-width: 600px) {
+            button {
+                flex: 1 1 calc(50% - 10px);
+                max-width: calc(50% - 10px);
+            }
+            .responsive-buttons button {
+                flex: 1 1 calc(50% - 10px);
+                max-width: calc(50% - 10px);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>معالج النصوص العربية التفاعلي</h1>
+        
+        <div class="text-area">
+            <textarea id="input-text" placeholder="اكتب النص هنا..."></textarea>
+            <div id="processed-text"></div>
+        </div>
+
+        <div class="button-group">
+            <button id="read-btn" title="قراءة النص">
+                <span>قراءة</span>
+            </button>
+            <button id="pause-btn" title="إيقاف مؤقت">
+                <span>إيقاف</span>
+            </button>
+            <button id="save-text-btn" title="حفظ النص">
+                <span>حفظ النص</span>
+            </button>
+            <button id="save-audio-btn" title="حفظ التسجيل الصوتي">
+                <span>حفظ الصوت</span>
+            </button>
+        </div>
+
+        <div class="responsive-buttons">
+            <button id="button1" onclick="window.location.href='./furquanelhoda1.html'">فرقان الهدى - 1</button>
+            <button id="button2" onclick="window.location.href='./furquanelhoda2.html'">فرقان الهدى - 2</button>
+            <button id="button3" onclick="window.location.href='./furquanelhoda3.html'">فرقان الهدى - 3</button>
+            <button id="button4" onclick="window.location.href='./furquanelhoda4.html'">فرقان الهدى - 4</button>
+            <button id="button5" onclick="window.location.href='./furquanelhoda5.html'">فرقان الهدى - 5</button>
+            <button id="button6" onclick="window.location.href='./furquanelhoda6.html'">فرقان الهدى - 6</button>
+            <button id="button7" onclick="window.location.href='./letres14.html'">فرقان الهدى - 7</button>
+            <button id="button8" onclick="window.location.href='./letres14_vip.html'">فرقان الهدى - 8</button>
+        </div>
+
+        <div id="timer"></div>
+        <div id="status" class="status"></div>
+    </div>
+
+    <script src="https://code.responsivevoice.org/responsivevoice.js?"></script>
+    <script>
+        const arabicDiacritics = {
+            'ألمر': 'أَلِفْ لَامْ مِيمْ رَاءْ',
+            'ألف': 'أَلِفْ',
+            'لام': 'لَامْ',
+            'ميم': 'مِيمْ',
+            'نون': 'نُونْ',
+            'واو': 'وَاوْ',
+            'ياء': 'يَاءْ',
+            'باء': 'بَاءْ',
+            'تاء': 'تَاءْ',
+            'ثاء': 'ثَاءْ',
+            'جيم': 'جِيمْ',
+            'حاء': 'حَاءْ',
+            'خاء': 'خَاءْ',
+            'دال': 'دَالْ',
+            'ذال': 'ذَالْ',
+            'راء': 'رَاءْ',
+            'زاي': 'زَايْ',
+            'سين': 'سِينْ',
+            'شين': 'شِينْ',
+            'صاد': 'صَادْ',
+            'ضاد': 'ضَادْ',
+            'طاء': 'طَاءْ',
+            'ظاء': 'ظَاءْ',
+            'عين': 'عَيْنْ',
+            'غين': 'غَيْنْ',
+            'فاء': 'فَاءْ',
+            'قاف': 'قَافْ',
+            'كاف': 'كَافْ',
+            'هاء': 'هَاءْ',
+        };
+
+        let isRecording = false;
+        let audioChunks = [];
+        let mediaRecorder = null;
+        let startTime = 0;
+        let timerInterval = null;
+
+        function processText(text) {
+            let lines = text.split('\n');
+            let processedLines = [];
+            
+            for (let i = 0; i < lines.length; i++) {
+                let line = lines[i].trim();
+                
+                if (line === '') continue;
+                
+                line = line.replace(/^(القرآن:|فرقان:)\s*/g, '');
+                
+                if (i < lines.length - 1 && 
+                    lines[i].startsWith('القرآن:') && 
+                    lines[i + 1].startsWith('القرآن:')) {
+                    continue;
+                }
+
+                let words = line.split(' ');
+                
+                // التحقق من الكلمة الأولى إذا كانت "ألمر"
+                if (words[0] === 'ألمر') {
+                    words[0] = arabicDiacritics['ألمر'];
+                } else {
+                    words = words.map(word => {
+                        if (word.match(/[\d١-٩]/)) return '';
+                        return arabicDiacritics[word] || word;
+                    });
+                }
+                
+                words = words.filter(word => word !== '');
+
+                if (words.length > 0) {
+                    processedLines.push(words.join(' '));
+                }
+            }
+
+            return processedLines.join('\n');
+        }
+
+        async function initAudioRecording() {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                mediaRecorder = new MediaRecorder(stream, {
+                    mimeType: 'audio/webm'
+                });
+
+                mediaRecorder.ondataavailable = (event) => {
+                    if (event.data.size > 0) {
+                        audioChunks.push(event.data);
+                    }
+                };
+
+                mediaRecorder.onstop = () => {
+                    const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
+                    const audioUrl = URL.createObjectURL(audioBlob);
+                    const a = document.createElement('a');
+                    a.href = audioUrl;
+                    a.download = 'التسجيل_الصوتي.webm';
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    URL.revokeObjectURL(audioUrl);
+                    audioChunks = [];
+                };
+            } catch (err) {
+                console.error('خطأ في الوصول إلى الميكروفون:', err);
+                document.getElementById('status').textContent = 'لا يمكن الوصول إلى الميكروفون';
+            }
+        }
+
+        function updateTimer() {
+            if (startTime > 0) {
+                const elapsed = Math.floor((Date.now() - startTime) / 1000);
+                const minutes = Math.floor(elapsed / 60);
+                const seconds = elapsed % 60;
+                document.getElementById('timer').textContent = 
+                    `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+            }
+        }
+
+        // معالجة النص في الوقت الفعلي
+        document.getElementById('input-text').addEventListener('input', (e) => {
+            const processedText = processText(e.target.value);
+            document.getElementById('processed-text').textContent = processedText;
+        });
+
+        let isPaused = false;
+
+        document.getElementById('read-btn').addEventListener('click', () => {
+            const processedText = document.getElementById('processed-text').textContent;
+            if (processedText.trim() !== '') {
+                if (isPaused) {
+                    responsiveVoice.resume();
+                    isPaused = false;
+                    document.getElementById('status').textContent = 'جارِ القراءة...';
+                } else {
+                    responsiveVoice.speak(processedText, "Arabic Male", {
+                        rate: 0.9,
+                        pitch: 1,
+                        onstart: () => {
+                            document.getElementById('status').textContent = 'جارِ القراءة...';
+                            startTime = Date.now();
+                            timerInterval = setInterval(updateTimer, 1000);
+                        },
+                        onend: () => {
+                            document.getElementById('status').textContent = 'انتهت القراءة';
+                            clearInterval(timerInterval);
+                            startTime = 0;
+                            document.getElementById('timer').textContent = '';
+                        }
+                    });
+                }
+            }
+        });
+
+        document.getElementById('pause-btn').addEventListener('click', () => {
+            if (responsiveVoice.isPlaying()) {
+                if (isPaused) {
+                    responsiveVoice.resume();
+                    isPaused = false;
+                    document.getElementById('status').textContent = 'جارِ القراءة...';
+                } else {
+                    responsiveVoice.pause();
+                    isPaused = true;
+                    document.getElementById('status').textContent = 'تم الإيقاف المؤقت';
+                }
+            }
+        });
+
+        document.getElementById('save-text-btn').addEventListener('click', () => {
+            const processedText = document.getElementById('processed-text').textContent;
+            if (processedText.trim() !== '') {
+                const blob = new Blob([processedText], {type: 'text/plain;charset=utf-8'});
+                const a = document.createElement('a');
+                a.href = URL.createObjectURL(blob);
+                a.download = 'النص_المشكل.txt';
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(a.href);
+                document.getElementById('status').textContent = 'تم حفظ النص';
+            }
+        });
+
+        document.getElementById('save-audio-btn').addEventListener('click', () => {
+            if (!isRecording) {
+                if (mediaRecorder && mediaRecorder.state === 'inactive') {
+                    audioChunks = [];
+                    mediaRecorder.start(1000);
+                    isRecording = true;
+                    document.getElementById('save-audio-btn').textContent = 'إيقاف التسجيل';
+                    document.getElementById('status').textContent = 'جارِ التسجيل...';
+                    startTime = Date.now();
+                    timerInterval = setInterval(updateTimer, 1000);
+                }
+            } else {
+                if (mediaRecorder && mediaRecorder.state === 'recording') {
+                    mediaRecorder.stop();
+                    isRecording = false;
+                    document.getElementById('save-audio-btn').textContent = 'حفظ الصوت';
+                    document.getElementById('status').textContent = 'تم حفظ التسجيل';
+                    clearInterval(timerInterval);
+                    startTime = 0;
+                    document.getElementById('timer').textContent = '';
+                }
+            }
+        });
+
+        // تهيئة التسجيل الصوتي عند تحميل الصفحة
+        window.onload = () => {
+            responsiveVoice.init();
+            initAudioRecording();
+        };
+    </script>
+</body>
+</html>
